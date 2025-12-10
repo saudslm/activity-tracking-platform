@@ -1,22 +1,14 @@
 // ============================================
-// FILE: app/routes/auth/register.tsx
+// FILE: app/routes/auth/register.tsx (MIGRATED TO SHADCN/UI)
 // ============================================
-import {
-  TextInput,
-  PasswordInput,
-  Button,
-  Paper,
-  Title,
-  Container,
-  Stack,
-  Anchor,
-  Text,
-  Box,
-} from "@mantine/core";
 import { ActionFunctionArgs, Form, redirect, useActionData, useNavigate } from "react-router";
 import { hashPassword } from "~/lib/auth.server";
 import { db } from "~/lib/db.server";
 import { users, organizations } from "~/db/schema";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 
 export async function action({ request }: ActionFunctionArgs) {
   const formData = await request.formData();
@@ -65,138 +57,94 @@ export default function Register() {
   const actionData = useActionData<typeof action>();
 
   return (
-    <Box style={{ 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center',
-      backgroundColor: '#FBFBFA' 
-    }}>
-      <Container size={420}>
-        <Stack gap="xl">
-          <div style={{ textAlign: 'center' }}>
-            <Title 
-              order={1} 
-              style={{ 
-                fontSize: '32px', 
-                fontWeight: 700,
-                color: '#37352F',
-                marginBottom: '8px'
-              }}
-            >
+    <div className="min-h-screen flex items-center bg-notion-bg">
+      <div className="w-full max-w-[420px] mx-auto px-4">
+        <div className="space-y-8">
+          {/* Header */}
+          <div className="text-center">
+            <h1 className="text-[32px] font-bold text-notion-text mb-2">
               Create your account
-            </Title>
-            <Text c="#787774" size="sm">
+            </h1>
+            <p className="text-sm text-notion-secondary">
               Already have an account?{" "}
-              <Anchor 
-                size="sm" 
-                component="button" 
+              <button
                 onClick={() => navigate("/login")}
-                style={{ color: '#2383E2', fontWeight: 500 }}
+                className="text-[#2383E2] font-medium hover:underline"
               >
                 Sign in
-              </Anchor>
-            </Text>
+              </button>
+            </p>
           </div>
 
-          <Paper 
-            p={32} 
-            radius="lg"
-            style={{
-              border: '1px solid #E9E9E7',
-              backgroundColor: '#ffffff',
-              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
-            }}
-          >
-            <Form method="post">
-              <Stack gap="lg">
-                <TextInput
-                  label="Full Name"
+          {/* Form Card */}
+          <Card className="border-notion-border p-8 shadow-lg">
+            <Form method="post" className="space-y-6">
+              <div className="space-y-2">
+                <Label htmlFor="name" className="text-notion-text font-semibold">
+                  Full Name
+                </Label>
+                <Input
+                  id="name"
                   name="name"
                   placeholder="John Doe"
                   required
-                  styles={{
-                    label: { 
-                      color: '#37352F', 
-                      fontWeight: 600, 
-                      fontSize: '14px',
-                      marginBottom: '8px'
-                    },
-                  }}
                 />
+              </div>
 
-                <TextInput
-                  label="Work Email"
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-notion-text font-semibold">
+                  Work Email
+                </Label>
+                <Input
+                  id="email"
                   name="email"
+                  type="email"
                   placeholder="you@company.com"
                   required
-                  type="email"
-                  styles={{
-                    label: { 
-                      color: '#37352F', 
-                      fontWeight: 600, 
-                      fontSize: '14px',
-                      marginBottom: '8px'
-                    },
-                  }}
                 />
+              </div>
 
-                <TextInput
-                  label="Organization Name"
+              <div className="space-y-2">
+                <Label htmlFor="organizationName" className="text-notion-text font-semibold">
+                  Organization Name
+                </Label>
+                <Input
+                  id="organizationName"
                   name="organizationName"
                   placeholder="Acme Inc"
                   required
-                  styles={{
-                    label: { 
-                      color: '#37352F', 
-                      fontWeight: 600, 
-                      fontSize: '14px',
-                      marginBottom: '8px'
-                    },
-                  }}
                 />
+              </div>
 
-                <PasswordInput
-                  label="Password"
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-notion-text font-semibold">
+                  Password
+                </Label>
+                <Input
+                  id="password"
                   name="password"
+                  type="password"
                   placeholder="At least 8 characters"
                   required
-                  styles={{
-                    label: { 
-                      color: '#37352F', 
-                      fontWeight: 600, 
-                      fontSize: '14px',
-                      marginBottom: '8px'
-                    },
-                  }}
                 />
+              </div>
 
-                {actionData?.error && (
-                  <Text c="red" size="sm" style={{ 
-                    padding: '8px 12px',
-                    backgroundColor: '#FFF3F3',
-                    borderRadius: '6px',
-                    border: '1px solid #FFE0E0'
-                  }}>
-                    {actionData.error}
-                  </Text>
-                )}
+              {actionData?.error && (
+                <div className="bg-red-50 border border-red-200 text-red-600 text-sm p-3 rounded-md">
+                  {actionData.error}
+                </div>
+              )}
 
-                <Button 
-                  type="submit" 
-                  fullWidth
-                  size="md"
-                  style={{
-                    backgroundColor: '#2383E2',
-                    fontWeight: 600,
-                  }}
-                >
-                  Create account
-                </Button>
-              </Stack>
+              <Button 
+                type="submit" 
+                className="w-full bg-[#2383E2] hover:bg-[#1d6bc4] font-semibold h-11"
+              >
+                Create account
+              </Button>
             </Form>
-          </Paper>
-        </Stack>
-      </Container>
-    </Box>
+          </Card>
+        </div>
+      </div>
+    </div>
   );
 }

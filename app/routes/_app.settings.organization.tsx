@@ -1,13 +1,11 @@
 // ============================================
-// FILE: app/routes/_app.settings.organization.tsx
+// FILE: app/routes/_app.settings.organization.tsx (MIGRATED TO SHADCN/UI)
 // ============================================
-import {
-  Stack,
-  TextInput,
-  Button,
-  Paper,
-} from "@mantine/core";
 import { LoaderFunctionArgs } from "react-router";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return {};
@@ -15,19 +13,23 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function OrganizationSettings() {
   return (
-    <Paper p="xl" radius="md" style={{ border: '1px solid #E9E9E7' }}>
-      <Stack gap="lg">
-        <TextInput
-          label="Organization Name"
-          placeholder="Acme Inc"
-          styles={{
-            label: { color: '#37352F', fontWeight: 600, marginBottom: '8px' },
-          }}
-        />
-        <Button style={{ backgroundColor: '#2383E2', fontWeight: 500 }}>
+    <Card className="border-notion-border p-8">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="org-name" className="text-notion-text font-semibold">
+            Organization Name
+          </Label>
+          <Input
+            id="org-name"
+            placeholder="Acme Inc"
+            defaultValue=""
+          />
+        </div>
+        
+        <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
           Save changes
         </Button>
-      </Stack>
-    </Paper>
+      </div>
+    </Card>
   );
 }

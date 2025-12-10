@@ -1,14 +1,8 @@
 // ============================================
 // FILE: app/routes/_app.settings.tsx
 // ============================================
-import {
-  Title,
-  Stack,
-  Box,
-  Text,
-  Tabs,
-} from "@mantine/core";
 import { LoaderFunctionArgs, Outlet, useLoaderData, useLocation, useNavigate } from "react-router";
+import { Tabs, TabsList, TabsTrigger } from "~/components/ui/tabs";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return {};
@@ -20,55 +14,61 @@ export default function Settings() {
   const loaderData = useLoaderData<typeof loader>();
 
   return (
-    <Stack gap="xl">
-      <Box>
-        <Title 
-          order={1} 
-          style={{ 
-            fontSize: '40px', 
-            fontWeight: 700,
-            color: '#37352F',
-            marginBottom: '4px'
-          }}
-        >
-          Settings
-        </Title>
-        <Text c="#787774" size="sm">
+    <div className="flex flex-col gap-8">
+      {/* Header */}
+      <div>
+        <h1 className="text-4xl font-bold text-[#37352F] mb-1">Settings</h1>
+        <p className="text-sm text-[#787774]">
           Manage your account and organization preferences
-        </Text>
-      </Box>
+        </p>
+      </div>
 
-      <Tabs 
+      {/* Tabs */}
+      <Tabs
         value={location.pathname}
-        onChange={(value) => navigate(value!)}
-        styles={{
-          list: {
-            borderBottom: '1px solid #E9E9E7',
-          },
-          tab: {
-            color: '#787774',
-            fontWeight: 500,
-            padding: '12px 16px',
-            '&[data-active]': {
-              color: '#37352F',
-              borderColor: '#37352F',
-            },
-            '&:hover': {
-              backgroundColor: 'transparent',
-              borderColor: '#787774',
-            },
-          },
-        }}
+        onValueChange={(value) => navigate(value)}
       >
-        <Tabs.List>
-          <Tabs.Tab value="/settings/profile">Profile</Tabs.Tab>
-          <Tabs.Tab value="/settings/organization">Organization</Tabs.Tab>
-          <Tabs.Tab value="/settings/privacy">Privacy</Tabs.Tab>
-          <Tabs.Tab value="/settings/clickup">ClickUp</Tabs.Tab>
-        </Tabs.List>
+        <TabsList className="border-b border-[#E9E9E7] rounded-none h-auto p-0">
+          <TabsTrigger
+            value="/settings/profile"
+            className="px-4 py-3 text-[#787774] font-medium data-[state=active]:text-[#37352F] 
+                       data-[state=active]:border-b-2 data-[state=active]:border-[#37352F]
+                       rounded-none hover:bg-transparent hover:text-[#37352F]"
+          >
+            Profile
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="/settings/organization"
+            className="px-4 py-3 text-[#787774] font-medium data-[state=active]:text-[#37352F] 
+                       data-[state=active]:border-b-2 data-[state=active]:border-[#37352F]
+                       rounded-none hover:bg-transparent hover:text-[#37352F]"
+          >
+            Organization
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="/settings/privacy"
+            className="px-4 py-3 text-[#787774] font-medium data-[state=active]:text-[#37352F] 
+                       data-[state=active]:border-b-2 data-[state=active]:border-[#37352F]
+                       rounded-none hover:bg-transparent hover:text-[#37352F]"
+          >
+            Privacy
+          </TabsTrigger>
+
+          <TabsTrigger
+            value="/settings/clickup"
+            className="px-4 py-3 text-[#787774] font-medium data-[state=active]:text-[#37352F] 
+                       data-[state=active]:border-b-2 data-[state=active]:border-[#37352F]
+                       rounded-none hover:bg-transparent hover:text-[#37352F]"
+          >
+            ClickUp
+          </TabsTrigger>
+        </TabsList>
       </Tabs>
 
+      {/* Nested pages */}
       <Outlet />
-    </Stack>
+    </div>
   );
 }

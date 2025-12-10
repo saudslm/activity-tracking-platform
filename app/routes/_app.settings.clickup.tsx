@@ -1,16 +1,11 @@
 // ============================================
-// FILE: app/routes/_app.settings.clickup.tsx
+// FILE: app/routes/_app.settings.clickup.tsx (MIGRATED TO SHADCN/UI)
 // ============================================
-import {
-  Stack,
-  Button,
-  Paper,
-  Text,
-  Group,
-  Badge,
-} from "@mantine/core";
-import { IconClick } from "@tabler/icons-react"
+import { IconClick } from "@tabler/icons-react";
 import { LoaderFunctionArgs, useLoaderData } from "react-router";
+import { Badge } from "~/components/ui/badge";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return { connected: false };
@@ -18,37 +13,40 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function ClickUpSettings() {
   const loaderData = useLoaderData<typeof loader>();
+  
   return (
-    <Paper p="xl" radius="md" style={{ border: '1px solid #E9E9E7' }}>
-      <Stack gap="lg">
-        <Group justify="space-between">
-          <div>
-            <Group gap="sm" mb="xs">
+    <Card className="border-notion-border p-8">
+      <div className="space-y-6">
+        <div className="flex items-start justify-between">
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
               <IconClick size={24} />
-              <Text size="lg" fw={600} c="#37352F">
+              <h3 className="text-lg font-semibold text-notion-text">
                 ClickUp Integration
-              </Text>
-            </Group>
-            <Text size="sm" c="#787774">
+              </h3>
+            </div>
+            <p className="text-sm text-notion-secondary">
               Connect your ClickUp workspace to automatically track time
-            </Text>
+            </p>
           </div>
           {loaderData.connected ? (
-            <Badge color="green" variant="light">Connected</Badge>
+            <Badge variant="default" className="bg-green-500">
+              Connected
+            </Badge>
           ) : (
-            <Badge color="gray" variant="light">Not connected</Badge>
+            <Badge variant="secondary">
+              Not connected
+            </Badge>
           )}
-        </Group>
+        </div>
 
         {!loaderData.connected && (
-          <Button 
-            leftSection={<IconClick size={16} />}
-            style={{ backgroundColor: '#2383E2', fontWeight: 500 }}
-          >
+          <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
+            <IconClick size={16} className="mr-2" />
             Connect ClickUp
           </Button>
         )}
-      </Stack>
-    </Paper>
+      </div>
+    </Card>
   );
 }

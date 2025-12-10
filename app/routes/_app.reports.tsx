@@ -1,17 +1,10 @@
 // ============================================
-// FILE: app/routes/_app.reports.tsx
+// FILE: app/routes/_app.reports.tsx (MIGRATED TO SHADCN/UI)
 // ============================================
-import {
-  Title,
-  Stack,
-  Box,
-  Text,
-  Group,
-  Paper,
-  Button,
-} from "@mantine/core";
 import { IconDownload, IconCalendar } from "@tabler/icons-react";
 import { LoaderFunctionArgs, useLoaderData } from "react-router";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return { reports: [] };
@@ -19,55 +12,42 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function Reports() {
   const loaderData = useLoaderData<typeof loader>();
+  
   return (
-    <Stack gap="xl">
-      <Group justify="space-between">
-        <Box>
-          <Title 
-            order={1} 
-            style={{ 
-              fontSize: '40px', 
-              fontWeight: 700,
-              color: '#37352F',
-              marginBottom: '4px'
-            }}
-          >
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-[40px] font-bold text-notion-text mb-1">
             Reports
-          </Title>
-          <Text c="#787774" size="sm">
+          </h1>
+          <p className="text-sm text-notion-secondary">
             Generate and download productivity reports
-          </Text>
-        </Box>
-        <Button 
-          leftSection={<IconDownload size={16} />}
-          variant="light"
-          color="dark"
-        >
+          </p>
+        </div>
+        <Button variant="outline">
+          <IconDownload size={16} className="mr-2" />
           Export
         </Button>
-      </Group>
+      </div>
 
-      <Paper
-        p="xl"
-        radius="md"
-        style={{
-          border: '1px solid #E9E9E7',
-          backgroundColor: '#ffffff',
-          textAlign: 'center',
-          padding: '60px 20px',
-        }}
-      >
-        <IconCalendar size={48} color="#787774" style={{ marginBottom: '16px' }} />
-        <Text size="lg" fw={600} c="#37352F" mb="xs">
-          No reports yet
-        </Text>
-        <Text size="sm" c="#787774" mb="xl">
-          Reports will appear here once you have activity data
-        </Text>
-        <Button style={{ backgroundColor: '#2383E2', fontWeight: 500 }}>
-          Generate first report
-        </Button>
-      </Paper>
-    </Stack>
+      {/* Empty State */}
+      <Card className="border-notion-border p-16 text-center">
+        <div className="flex flex-col items-center space-y-4">
+          <IconCalendar size={48} className="text-notion-secondary" />
+          <div>
+            <h3 className="text-lg font-semibold text-notion-text mb-2">
+              No reports yet
+            </h3>
+            <p className="text-sm text-notion-secondary mb-6">
+              Reports will appear here once you have activity data
+            </p>
+          </div>
+          <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
+            Generate first report
+          </Button>
+        </div>
+      </Card>
+    </div>
   );
 }

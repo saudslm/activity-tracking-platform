@@ -1,16 +1,19 @@
 // ============================================
-// FILE: app/routes/_app.settings.privacy.tsx
+// FILE: app/routes/_app.settings.privacy.tsx (MIGRATED TO SHADCN/UI)
 // ============================================
-import {
-  Stack,
-  Select,
-  Switch,
-  Button,
-  Paper,
-  Text,
-  TextInput,
-} from "@mantine/core";
 import { LoaderFunctionArgs } from "react-router";
+import { Button } from "~/components/ui/button";
+import { Card } from "~/components/ui/card";
+import { Input } from "~/components/ui/input";
+import { Label } from "~/components/ui/label";
+import { Switch } from "~/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "~/components/ui/select";
 
 export async function loader({ request }: LoaderFunctionArgs) {
   return {};
@@ -18,43 +21,52 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function PrivacySettings() {
   return (
-    <Paper p="xl" radius="md" style={{ border: '1px solid #E9E9E7' }}>
-      <Stack gap="lg">
-        <div>
-          <Text size="sm" fw={600} c="#37352F" mb="xs">
+    <Card className="border-notion-border p-8">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Label htmlFor="blur-mode" className="text-notion-text font-semibold">
             Screenshot Blur Mode
-          </Text>
-          <Select
-            placeholder="Select blur mode"
-            data={[
-              { value: "always", label: "Always blur screenshots" },
-              { value: "optional", label: "Let employees choose" },
-              { value: "never", label: "Never blur" },
-            ]}
-            styles={{
-              label: { color: '#37352F', fontWeight: 600, marginBottom: '8px' },
-            }}
+          </Label>
+          <Select>
+            <SelectTrigger id="blur-mode">
+              <SelectValue placeholder="Select blur mode" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="always">Always blur screenshots</SelectItem>
+              <SelectItem value="optional">Let employees choose</SelectItem>
+              <SelectItem value="never">Never blur</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="flex items-center justify-between space-x-4 py-3">
+          <div className="flex-1 space-y-1">
+            <Label htmlFor="allow-delete" className="text-notion-text font-semibold cursor-pointer">
+              Allow employees to delete screenshots
+            </Label>
+            <p className="text-xs text-notion-secondary">
+              Within the grace period set below
+            </p>
+          </div>
+          <Switch id="allow-delete" />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="grace-period" className="text-notion-text font-semibold">
+            Delete Grace Period (minutes)
+          </Label>
+          <Input
+            id="grace-period"
+            type="number"
+            placeholder="5"
+            defaultValue=""
           />
         </div>
 
-        <Switch
-          label="Allow employees to delete screenshots"
-          description="Within the grace period set below"
-        />
-
-        <TextInput
-          label="Delete Grace Period (minutes)"
-          placeholder="5"
-          type="number"
-          styles={{
-            label: { color: '#37352F', fontWeight: 600, marginBottom: '8px' },
-          }}
-        />
-
-        <Button style={{ backgroundColor: '#2383E2', fontWeight: 500 }}>
+        <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
           Save changes
         </Button>
-      </Stack>
-    </Paper>
+      </div>
+    </Card>
   );
 }
