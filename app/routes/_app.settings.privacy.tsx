@@ -1,5 +1,5 @@
 // ============================================
-// FILE: app/routes/_app.settings.privacy.tsx (MIGRATED TO SHADCN/UI)
+// FILE: app/routes/_app.settings.privacy.tsx (YELLOW THEME)
 // ============================================
 import { LoaderFunctionArgs } from "react-router";
 import { Button } from "~/components/ui/button";
@@ -21,10 +21,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function PrivacySettings() {
   return (
-    <Card className="border-notion-border p-8">
+    <Card className="border-border p-8">
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="blur-mode" className="text-notion-text font-semibold">
+          <Label htmlFor="blur-mode" className="text-foreground font-semibold">
             Screenshot Blur Mode
           </Label>
           <Select>
@@ -41,10 +41,10 @@ export default function PrivacySettings() {
 
         <div className="flex items-center justify-between space-x-4 py-3">
           <div className="flex-1 space-y-1">
-            <Label htmlFor="allow-delete" className="text-notion-text font-semibold cursor-pointer">
+            <Label htmlFor="allow-delete" className="text-foreground font-semibold cursor-pointer">
               Allow employees to delete screenshots
             </Label>
-            <p className="text-xs text-notion-secondary">
+            <p className="text-xs text-muted-foreground">
               Within the grace period set below
             </p>
           </div>
@@ -52,7 +52,7 @@ export default function PrivacySettings() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="grace-period" className="text-notion-text font-semibold">
+          <Label htmlFor="grace-period" className="text-foreground font-semibold">
             Delete Grace Period (minutes)
           </Label>
           <Input
@@ -63,7 +63,7 @@ export default function PrivacySettings() {
           />
         </div>
 
-        <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
+        <Button>
           Save changes
         </Button>
       </div>

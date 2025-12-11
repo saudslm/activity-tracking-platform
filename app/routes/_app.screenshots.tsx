@@ -1,5 +1,5 @@
 // ============================================
-// FILE: app/routes/_app.screenshots.tsx (MIGRATED TO SHADCN/UI)
+// FILE: app/routes/_app.screenshots.tsx (YELLOW THEME)
 // ============================================
 import { useState } from "react";
 import { IconTrash, IconEye, IconBlur } from "@tabler/icons-react";
@@ -79,10 +79,10 @@ export default function Screenshots() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-[40px] font-bold text-notion-text mb-1">
+        <h1 className="text-[40px] font-bold text-muted mb-1">
           Screenshots
         </h1>
-        <p className="text-sm text-notion-secondary">
+        <p className="text-sm text-muted-foreground">
           View and manage captured screenshots from Cloudflare R2
         </p>
       </div>
@@ -99,7 +99,7 @@ export default function Screenshots() {
             </SelectItem>
           </SelectContent>
         </Select>
-        <p className="text-sm text-notion-secondary">
+        <p className="text-sm text-muted-foreground">
           {loaderData.screenshots.length} screenshots
         </p>
       </div>
@@ -107,12 +107,12 @@ export default function Screenshots() {
       {/* Screenshots Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
         {loaderData.screenshots.map((screenshot) => (
-          <Card key={screenshot.id} className="stat-card border-notion-border overflow-hidden">
+          <Card key={screenshot.id} className="border-border overflow-hidden hover:shadow-md transition-shadow">
             <button
               onClick={() => openPreview(screenshot)}
               className="w-full"
             >
-              <div className="h-40 bg-notion-bg">
+              <div className="h-40 bg-muted">
                 <img
                   src={screenshot.url}
                   alt="Screenshot"
@@ -123,7 +123,7 @@ export default function Screenshots() {
 
             <CardContent className="p-4 space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-xs text-notion-secondary font-medium">
+                <p className="text-xs text-muted-foreground font-medium">
                   {format(new Date(screenshot.timestamp), "HH:mm:ss")}
                 </p>
                 {screenshot.isBlurred && (
@@ -134,11 +134,11 @@ export default function Screenshots() {
                 )}
               </div>
 
-              <p className="text-sm font-medium text-notion-text truncate">
+              <p className="text-sm font-medium text-foreground truncate">
                 {screenshot.applicationName}
               </p>
 
-              <p className="text-xs text-notion-secondary line-clamp-2 min-h-[2.5rem]">
+              <p className="text-xs text-muted-foreground line-clamp-2 min-h-[2.5rem]">
                 {screenshot.windowTitle}
               </p>
 
@@ -154,7 +154,7 @@ export default function Screenshots() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
                 >
                   <IconTrash size={16} />
                 </Button>
@@ -168,7 +168,7 @@ export default function Screenshots() {
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle className="text-notion-text">
+            <DialogTitle className="text-foreground">
               {selectedScreenshot?.applicationName}
             </DialogTitle>
           </DialogHeader>
@@ -181,10 +181,10 @@ export default function Screenshots() {
               />
               <div className="flex items-start justify-between">
                 <div>
-                  <p className="text-sm font-medium text-notion-text">
+                  <p className="text-sm font-medium text-foreground">
                     {format(new Date(selectedScreenshot.timestamp), "PPpp")}
                   </p>
-                  <p className="text-xs text-notion-secondary mt-1">
+                  <p className="text-xs text-muted-foreground mt-1">
                     {selectedScreenshot.windowTitle}
                   </p>
                 </div>

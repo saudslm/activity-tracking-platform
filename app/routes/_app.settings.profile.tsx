@@ -1,5 +1,5 @@
 // ============================================
-// FILE: app/routes/_app.settings.profile.tsx (MIGRATED TO SHADCN/UI)
+// FILE: app/routes/_app.settings.profile.tsx (YELLOW THEME)
 // ============================================
 import { LoaderFunctionArgs } from "react-router";
 import { Button } from "~/components/ui/button";
@@ -13,10 +13,10 @@ export async function loader({ request }: LoaderFunctionArgs) {
 
 export default function ProfileSettings() {
   return (
-    <Card className="border-notion-border p-8">
+    <Card className="border-border p-8">
       <div className="space-y-6">
         <div className="space-y-2">
-          <Label htmlFor="name" className="text-notion-text font-semibold">
+          <Label htmlFor="name" className="text-foreground font-semibold">
             Full Name
           </Label>
           <Input
@@ -27,7 +27,7 @@ export default function ProfileSettings() {
         </div>
         
         <div className="space-y-2">
-          <Label htmlFor="email" className="text-notion-text font-semibold">
+          <Label htmlFor="email" className="text-foreground font-semibold">
             Email
           </Label>
           <Input
@@ -38,7 +38,7 @@ export default function ProfileSettings() {
           />
         </div>
         
-        <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
+        <Button>
           Save changes
         </Button>
       </div>

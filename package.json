@@ -6,7 +6,11 @@
     "dev": "react-router dev",
     "build": "react-router build",
     "start": "react-router-serve ./build/server/index.js",
-    "worker": "tsx ./worker/index.ts"
+    "worker": "tsx ./worker/index.ts",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx drizzle/migrate.ts",
+    "db:push": "drizzle-kit push",
+    "db:studio": "drizzle-kit studio"
   },
   "keywords": [],
   "author": "",

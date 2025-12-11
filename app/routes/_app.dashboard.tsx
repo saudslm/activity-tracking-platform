@@ -1,5 +1,5 @@
 // ============================================
-// FILE: app/routes/_app.dashboard.tsx (SHADCN VERSION)
+// FILE: app/routes/_app.dashboard.tsx (YELLOW THEME)
 // ============================================
 import {
   IconClock,
@@ -80,10 +80,10 @@ export default function Dashboard() {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-[40px] font-bold text-notion-text mb-1">
+        <h1 className="text-[40px] font-bold text-muted mb-1">
           Dashboard
         </h1>
-        <p className="text-sm text-notion-secondary">
+        <p className="text-sm text-muted-foreground">
           Track your productivity and activity
         </p>
       </div>
@@ -91,22 +91,22 @@ export default function Dashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Hours Today */}
-        <Card className="stat-card border-notion-border">
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <IconClock size={20} className="text-blue-600" strokeWidth={1.5} />
+                <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <IconClock size={20} className="text-primary" strokeWidth={1.5} />
                 </div>
                 <Badge variant="secondary" className="text-[10px] font-semibold">
                   TODAY
                 </Badge>
               </div>
               <div>
-                <p className="text-[32px] font-bold text-notion-text leading-none">
+                <p className="text-[32px] font-bold text-foreground leading-none">
                   {loaderData.todayHours}
                 </p>
-                <p className="text-sm text-notion-secondary mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Hours tracked
                 </p>
               </div>
@@ -115,7 +115,7 @@ export default function Dashboard() {
         </Card>
 
         {/* Activity Level */}
-        <Card className="stat-card border-notion-border">
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="flex flex-col items-center space-y-4">
               <div className="relative h-24 w-24">
@@ -125,7 +125,8 @@ export default function Dashboard() {
                     cy="50"
                     r="40"
                     fill="none"
-                    stroke="#E9E9E7"
+                    stroke="currentColor"
+                    className="text-muted"
                     strokeWidth="8"
                   />
                   <circle
@@ -133,7 +134,8 @@ export default function Dashboard() {
                     cy="50"
                     r="40"
                     fill="none"
-                    stroke="#14B8A6"
+                    stroke="currentColor"
+                    className="text-primary"
                     strokeWidth="8"
                     strokeDasharray={`${loaderData.avgActivity * 2.51} 251`}
                     strokeLinecap="round"
@@ -141,12 +143,12 @@ export default function Dashboard() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold text-notion-text">
+                  <span className="text-lg font-bold text-foreground">
                     {loaderData.avgActivity}%
                   </span>
                 </div>
               </div>
-              <p className="text-sm text-notion-secondary">
+              <p className="text-sm text-muted-foreground">
                 Activity level
               </p>
             </div>
@@ -154,22 +156,22 @@ export default function Dashboard() {
         </Card>
 
         {/* Screenshots */}
-        <Card className="stat-card border-notion-border">
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-lg bg-violet-100 flex items-center justify-center">
-                  <IconPhoto size={20} className="text-violet-600" strokeWidth={1.5} />
+                <div className="h-10 w-10 rounded-lg bg-accent flex items-center justify-center">
+                  <IconPhoto size={20} className="text-accent-foreground" strokeWidth={1.5} />
                 </div>
                 <Badge variant="secondary" className="text-[10px] font-semibold">
                   CAPTURED
                 </Badge>
               </div>
               <div>
-                <p className="text-[32px] font-bold text-notion-text leading-none">
+                <p className="text-[32px] font-bold text-foreground leading-none">
                   {loaderData.screenshotCount}
                 </p>
-                <p className="text-sm text-notion-secondary mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Screenshots
                 </p>
               </div>
@@ -178,22 +180,22 @@ export default function Dashboard() {
         </Card>
 
         {/* Productivity */}
-        <Card className="stat-card border-notion-border">
+        <Card className="border-border">
           <CardContent className="p-6">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <div className="h-10 w-10 rounded-lg bg-green-100 flex items-center justify-center">
-                  <IconTrendingUp size={20} className="text-green-600" strokeWidth={1.5} />
+                <div className="h-10 w-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                  <IconTrendingUp size={20} className="text-primary" strokeWidth={1.5} />
                 </div>
                 <Badge variant="secondary" className="text-[10px] font-semibold">
                   STATUS
                 </Badge>
               </div>
               <div>
-                <p className="text-[32px] font-bold text-notion-text leading-none">
+                <p className="text-[32px] font-bold text-foreground leading-none">
                   {loaderData.avgActivity > 70 ? "High" : "Medium"}
                 </p>
-                <p className="text-sm text-notion-secondary mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Productivity
                 </p>
               </div>
@@ -203,38 +205,39 @@ export default function Dashboard() {
       </div>
 
       {/* Chart */}
-      <Card className="border-notion-border">
+      <Card className="border-border">
         <CardHeader>
-          <CardTitle className="text-xl font-semibold text-notion-text">
+          <CardTitle className="text-xl font-semibold text-foreground">
             Last 7 days
           </CardTitle>
         </CardHeader>
         <CardContent>
           <ResponsiveContainer width="100%" height={300}>
             <LineChart data={loaderData.chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E9E9E7" />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
               <XAxis 
-                dataKey="date" 
-                stroke="#787774"
+                dataKey="date"
+                className="text-muted-foreground"
                 style={{ fontSize: '12px' }}
               />
               <YAxis 
-                stroke="#787774"
+                className="text-muted-foreground"
                 style={{ fontSize: '12px' }}
               />
               <Tooltip 
                 contentStyle={{
-                  backgroundColor: '#ffffff',
-                  border: '1px solid #E9E9E7',
+                  backgroundColor: 'hsl(var(--card))',
+                  border: '1px solid hsl(var(--border))',
                   borderRadius: '6px',
+                  color: 'hsl(var(--foreground))',
                 }}
               />
               <Line 
                 type="monotone" 
-                dataKey="hours" 
-                stroke="#2383E2" 
+                dataKey="hours"
+                className="stroke-primary"
                 strokeWidth={2}
-                dot={{ fill: '#2383E2', r: 4 }}
+                dot={{ fill: 'hsl(var(--primary))', r: 4 }}
               />
             </LineChart>
           </ResponsiveContainer>

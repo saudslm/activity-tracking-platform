@@ -110,8 +110,8 @@ export default function Login() {
 
                   {/* Submit Button */}
                   <Button 
-                    type="submit" 
-                    className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-semibold"
+                    type="submit"
+                    className="w-full font-semibold"
                   >
                     Sign in
                   </Button>

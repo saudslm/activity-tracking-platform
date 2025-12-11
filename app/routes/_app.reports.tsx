@@ -1,5 +1,5 @@
 // ============================================
-// FILE: app/routes/_app.reports.tsx (MIGRATED TO SHADCN/UI)
+// FILE: app/routes/_app.reports.tsx (YELLOW THEME)
 // ============================================
 import { IconDownload, IconCalendar } from "@tabler/icons-react";
 import { LoaderFunctionArgs, useLoaderData } from "react-router";
@@ -18,10 +18,10 @@ export default function Reports() {
       {/* Header */}
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-[40px] font-bold text-notion-text mb-1">
+          <h1 className="text-[40px] font-bold text-muted mb-1">
             Reports
           </h1>
-          <p className="text-sm text-notion-secondary">
+          <p className="text-sm text-muted-foreground">
             Generate and download productivity reports
           </p>
         </div>
@@ -32,18 +32,18 @@ export default function Reports() {
       </div>
 
       {/* Empty State */}
-      <Card className="border-notion-border p-16 text-center">
+      <Card className="border-border p-16 text-center">
         <div className="flex flex-col items-center space-y-4">
-          <IconCalendar size={48} className="text-notion-secondary" />
+          <IconCalendar size={48} className="text-muted-foreground" />
           <div>
-            <h3 className="text-lg font-semibold text-notion-text mb-2">
+            <h3 className="text-lg font-semibold text-foreground mb-2">
               No reports yet
             </h3>
-            <p className="text-sm text-notion-secondary mb-6">
+            <p className="text-sm text-muted-foreground mb-6">
               Reports will appear here once you have activity data
             </p>
           </div>
-          <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
+          <Button>
             Generate first report
           </Button>
         </div>

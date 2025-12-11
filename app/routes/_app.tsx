@@ -24,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "~/components/ui/dropdown-menu";
+import { ThemeToggle } from "~/components/theme-toggle";
 import { Separator } from "~/components/ui/separator";
 import { cn } from "~/lib/utils";
 
@@ -97,7 +98,7 @@ export default function AppLayout() {
     { icon: IconUsers, label: "Team", href: "/team", roles: ["admin", "manager"] },
     { icon: IconPhoto, label: "Screenshots", href: "/screenshots" },
     { icon: IconChartBar, label: "Reports", href: "/reports" },
-    { icon: IconSettings, label: "Settings", href: "/settings" },
+    { icon: IconSettings, label: "Settings", href: "/settings/profile" },
   ];
 
   const filteredNavItems = navItems.filter(
@@ -164,6 +165,8 @@ export default function AppLayout() {
             />
           ))}
         </nav>
+
+        <ThemeToggle />
       </aside>
 
       {/* Main Content */}

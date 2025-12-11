@@ -1,5 +1,5 @@
 // ============================================
-// FILE: app/routes/_app.settings.clickup.tsx (MIGRATED TO SHADCN/UI)
+// FILE: app/routes/_app.settings.clickup.tsx (YELLOW THEME)
 // ============================================
 import { IconClick } from "@tabler/icons-react";
 import { LoaderFunctionArgs, useLoaderData } from "react-router";
@@ -15,22 +15,22 @@ export default function ClickUpSettings() {
   const loaderData = useLoaderData<typeof loader>();
   
   return (
-    <Card className="border-notion-border p-8">
+    <Card className="border-border p-8">
       <div className="space-y-6">
         <div className="flex items-start justify-between">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <IconClick size={24} />
-              <h3 className="text-lg font-semibold text-notion-text">
+              <h3 className="text-lg font-semibold text-foreground">
                 ClickUp Integration
               </h3>
             </div>
-            <p className="text-sm text-notion-secondary">
+            <p className="text-sm text-muted-foreground">
               Connect your ClickUp workspace to automatically track time
             </p>
           </div>
           {loaderData.connected ? (
-            <Badge variant="default" className="bg-green-500">
+            <Badge variant="default" className="bg-green-500 hover:bg-green-600">
               Connected
             </Badge>
           ) : (
@@ -41,7 +41,7 @@ export default function ClickUpSettings() {
         </div>
 
         {!loaderData.connected && (
-          <Button className="bg-[#2383E2] hover:bg-[#1d6bc4] font-medium">
+          <Button>
             <IconClick size={16} className="mr-2" />
             Connect ClickUp
           </Button>
