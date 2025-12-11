@@ -17,7 +17,8 @@ export interface IntegrationProvider {
   // Resource fetching
   fetchWorkspaces(accessToken: string): Promise<Workspace[]>;
   fetchProjects(accessToken: string, workspaceId: string): Promise<Project[]>;
-  fetchTasks(accessToken: string, projectId: string): Promise<Task[]>;
+  fetchCollections(accessToken: string, projectId: string): Promise<Collection[]>;
+  fetchTasks(accessToken: string, collectionId: string): Promise<Task[]>;
   
   // Time tracking
   createTimeEntry(accessToken: string, entry: TimeEntryInput): Promise<TimeEntryResult>;
@@ -27,6 +28,26 @@ export interface IntegrationProvider {
   // Validation
   validateToken(accessToken: string): Promise<boolean>;
   getCurrentUser(accessToken: string): Promise<IntegrationUser>;
+  
+  // Hierarchy
+  getHierarchy(): ResourceHierarchy;
+}
+
+// Resource hierarchy definition
+export interface ResourceHierarchy {
+  supports: {
+    containers: boolean; // Workspaces/Teams
+    projects: boolean;
+    collections: boolean; // Lists/Sections/Sprints
+    subCollections: boolean; // Folders, nested lists
+  };
+  labels: {
+    container: string; // "Workspace", "Team", "Organization"
+    project: string; // "Space", "Project", "Repository"
+    collection: string; // "List", "Section", "Board"
+    task: string; // "Task", "Issue", "Card"
+  };
+  maxDepth: number; // Maximum nesting level
 }
 
 // Common types
@@ -49,6 +70,15 @@ export interface Project {
   id: string;
   name: string;
   workspaceId: string;
+  color?: string;
+  status?: string;
+  metadata?: Record<string, any>;
+}
+
+export interface Collection {
+  id: string;
+  name: string;
+  projectId: string;
   color?: string;
   status?: string;
   metadata?: Record<string, any>;

@@ -6,10 +6,12 @@ import {
   OAuthTokens,
   Workspace,
   Project,
+  Collection,
   Task,
   TimeEntryInput,
   TimeEntryResult,
   IntegrationUser,
+  ResourceHierarchy,
   AuthenticationError,
   RateLimitError,
   IntegrationError,
@@ -23,6 +25,24 @@ export class ClickUpProvider implements IntegrationProvider {
   private readonly clientId = process.env.CLICKUP_CLIENT_ID!;
   private readonly clientSecret = process.env.CLICKUP_CLIENT_SECRET!;
   private readonly baseUrl = 'https://api.clickup.com/api/v2';
+
+  getHierarchy(): ResourceHierarchy {
+    return {
+      supports: {
+        containers: true, // Workspaces
+        projects: true, // Spaces
+        collections: true, // Lists
+        subCollections: true, // Folders
+      },
+      labels: {
+        container: 'Workspace',
+        project: 'Space',
+        collection: 'List',
+        task: 'Task',
+      },
+      maxDepth: 4, // Workspace > Space > Folder > List > Task
+    };
+  }
 
   getAuthUrl(state: string, redirectUri: string): string {
     const params = new URLSearchParams({
@@ -90,40 +110,47 @@ export class ClickUpProvider implements IntegrationProvider {
     }));
   }
 
-  async fetchTasks(accessToken: string, projectId: string): Promise<Task[]> {
+  async fetchCollections(accessToken: string, projectId: string): Promise<Collection[]> {
     const lists = await this.makeRequest<{ lists: any[] }>(
       accessToken,
       `/space/${projectId}/list`
     );
 
-    const allTasks: Task[] = [];
+    return lists.lists.map((list) => ({
+      id: list.id,
+      name: list.name,
+      projectId,
+      color: list.color,
+      status: list.status,
+      metadata: { 
+        orderindex: list.orderindex,
+        content: list.content,
+        folder: list.folder,
+      },
+    }));
+  }
 
-    for (const list of lists.lists) {
-      const tasks = await this.makeRequest<{ tasks: any[] }>(
-        accessToken,
-        `/list/${list.id}/task`
-      );
+  async fetchTasks(accessToken: string, collectionId: string): Promise<Task[]> {
+    const tasks = await this.makeRequest<{ tasks: any[] }>(
+      accessToken,
+      `/list/${collectionId}/task`
+    );
 
-      allTasks.push(
-        ...tasks.tasks.map((task) => ({
-          id: task.id,
-          name: task.name,
-          projectId,
-          description: task.description,
-          status: task.status?.status,
-          assignees: task.assignees?.map((a: any) => a.id) || [],
-          dueDate: task.due_date ? new Date(parseInt(task.due_date)) : undefined,
-          metadata: {
-            listId: list.id,
-            listName: list.name,
-            priority: task.priority,
-            tags: task.tags,
-          },
-        }))
-      );
-    }
-
-    return allTasks;
+    return tasks.tasks.map((task) => ({
+      id: task.id,
+      name: task.name,
+      projectId: collectionId, // In ClickUp, tasks belong to lists
+      description: task.description,
+      status: task.status?.status,
+      assignees: task.assignees?.map((a: any) => a.id) || [],
+      dueDate: task.due_date ? new Date(parseInt(task.due_date)) : undefined,
+      metadata: {
+        priority: task.priority,
+        tags: task.tags,
+        creator: task.creator,
+        timeEstimate: task.time_estimate,
+      },
+    }));
   }
 
   async createTimeEntry(accessToken: string, entry: TimeEntryInput): Promise<TimeEntryResult> {
