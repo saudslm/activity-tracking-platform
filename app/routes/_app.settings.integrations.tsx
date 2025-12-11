@@ -303,7 +303,7 @@ export default function IntegrationsSettings() {
 
       {/* Available Integrations */}
       <div className="space-y-4">
-        <h2 className="text-xl font-semibold text-muted-foreground">Available Integrations</h2>
+        <h2 className="text-xl text-muted-foreground font-semibold">Available Integrations</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {availableProviders.map((provider) => {
             const isConnected = connectedIntegrations.some(

@@ -25,7 +25,7 @@ export class SmartSyncService {
   // Cache TTL in seconds
   private readonly CACHE_TTL = 300; // 5 minutes
   private readonly MAX_RESOURCES_PER_LEVEL = 100; // Don't sync more than 100 items per level
-
+  
   /**
    * Sync resources from integration (smart - only what's needed)
    */
@@ -37,19 +37,19 @@ export class SmartSyncService {
     full?: boolean; // Force full sync
   }) {
     const { integrationId, organizationId, accessToken, provider: providerType, full = false } = params;
-
+    
     const provider = getProvider(providerType);
     const hierarchy = provider.getHierarchy();
-
+    
     console.log(`🔄 Starting ${full ? 'full' : 'smart'} sync for ${providerType}...`);
-
+    
     const stats = {
       containers: 0,
       projects: 0,
       collections: 0,
       tasks: 0,
     };
-
+    
     try {
       // 1. Sync containers (workspaces/teams)
       if (hierarchy.supports.containers) {
@@ -62,12 +62,12 @@ export class SmartSyncService {
           level: 0,
         });
       }
-
+      
       // 2. For smart sync, only sync projects from first container
-      const containersToSync = full
+      const containersToSync = full 
         ? await this.getResources(organizationId, integrationId, "container")
         : await this.getResources(organizationId, integrationId, "container", 1);
-
+      
       if (hierarchy.supports.projects) {
         for (const container of containersToSync) {
           const projects = await provider.fetchProjects(accessToken, container.externalId);
@@ -81,12 +81,12 @@ export class SmartSyncService {
           });
         }
       }
-
+      
       // 3. For smart sync, only sync collections from first 5 projects
       const projectsToSync = full
         ? await this.getResources(organizationId, integrationId, "project")
         : await this.getResources(organizationId, integrationId, "project", 5);
-
+      
       if (hierarchy.supports.collections) {
         for (const project of projectsToSync) {
           const collections = await provider.fetchCollections(accessToken, project.externalId);
@@ -100,12 +100,12 @@ export class SmartSyncService {
           });
         }
       }
-
+      
       // 4. For smart sync, only sync tasks from first 5 collections
       const collectionsToSync = full
         ? await this.getResources(organizationId, integrationId, "collection")
         : await this.getResources(organizationId, integrationId, "collection", 5);
-
+      
       for (const collection of collectionsToSync) {
         const tasks = await provider.fetchTasks(accessToken, collection.externalId);
         // Only sync first 20 tasks per collection in smart mode
@@ -119,22 +119,22 @@ export class SmartSyncService {
           level: 3,
         });
       }
-
+      
       // Update integration last_synced_at
       await db
         .update(integrations)
         .set({ lastSyncedAt: new Date() })
         .where(eq(integrations.id, integrationId));
-
+      
       console.log(`✅ Sync complete:`, stats);
       return stats;
-
+      
     } catch (error) {
       console.error(`❌ Sync failed:`, error);
       throw error;
     }
   }
-
+  
   /**
    * Sync specific level on-demand (lazy loading)
    */
@@ -147,7 +147,7 @@ export class SmartSyncService {
     level: "projects" | "collections" | "tasks";
   }) {
     const { integrationId, organizationId, accessToken, provider: providerType, parentId, level } = params;
-
+    
     // Check cache first
     const cacheKey = `sync:${integrationId}:${parentId}:${level}`;
     const cached = this.getFromCache(cacheKey);
@@ -155,18 +155,18 @@ export class SmartSyncService {
       console.log(`📦 Using cached data for ${level}`);
       return cached;
     }
-
+    
     const provider = getProvider(providerType);
     const parent = await this.getResourceById(parentId);
-
+    
     if (!parent) {
       throw new Error("Parent resource not found");
     }
-
+    
     let resources: (Workspace | Project | Task)[] = [];
     let resourceType: "project" | "collection" | "task";
     let resourceLevel: number;
-
+    
     if (level === "projects") {
       resources = await provider.fetchProjects(accessToken, parent.externalId);
       resourceType = "project";
@@ -180,7 +180,7 @@ export class SmartSyncService {
       resourceType = "task";
       resourceLevel = 3;
     }
-
+    
     const count = await this.syncResources({
       organizationId,
       integrationId,
@@ -189,13 +189,13 @@ export class SmartSyncService {
       parentId,
       level: resourceLevel,
     });
-
+    
     // Cache the result
     this.setCache(cacheKey, count);
-
+    
     return count;
   }
-
+  
   /**
    * Track resource usage (for smart recommendations)
    */
@@ -208,7 +208,7 @@ export class SmartSyncService {
         timesAccessed: sql`${syncedResources.timesAccessed} + 1`,
       })
       .where(eq(syncedResources.id, resourceId));
-
+    
     // Add to recent resources
     const [existing] = await db
       .select()
@@ -220,7 +220,7 @@ export class SmartSyncService {
         )
       )
       .limit(1);
-
+    
     if (existing) {
       await db
         .update(recentResources)
@@ -238,7 +238,7 @@ export class SmartSyncService {
       });
     }
   }
-
+  
   /**
    * Get recent resources for user
    */
@@ -254,10 +254,10 @@ export class SmartSyncService {
       .where(eq(recentResources.userId, userId))
       .orderBy(desc(recentResources.lastUsedAt))
       .limit(limit);
-
+    
     return recent;
   }
-
+  
   /**
    * Search resources by name
    */
@@ -269,7 +269,7 @@ export class SmartSyncService {
     limit?: number;
   }) {
     const { organizationId, integrationId, query, resourceType, limit = 50 } = params;
-
+    
     const resources = await db
       .select()
       .from(syncedResources)
@@ -282,33 +282,33 @@ export class SmartSyncService {
         )
       )
       .limit(limit);
-
+    
     return resources;
   }
-
+  
   /**
    * Get resource hierarchy (breadcrumb)
    */
   async getResourcePath(resourceId: string): Promise<SyncedResource[]> {
     const path: SyncedResource[] = [];
     let currentId: string | null = resourceId;
-
+    
     while (currentId) {
       const [resource] = await db
         .select()
         .from(syncedResources)
         .where(eq(syncedResources.id, currentId))
         .limit(1);
-
+      
       if (!resource) break;
-
+      
       path.unshift(resource); // Add to beginning
       currentId = resource.parentId;
     }
-
+    
     return path;
   }
-
+  
   /**
    * Save user's default selections
    */
@@ -320,7 +320,7 @@ export class SmartSyncService {
     collectionId?: string;
   }) {
     const { userId, integrationId, containerId, projectId, collectionId } = params;
-
+    
     const [existing] = await db
       .select()
       .from(userIntegrationPreferences)
@@ -331,7 +331,7 @@ export class SmartSyncService {
         )
       )
       .limit(1);
-
+    
     if (existing) {
       await db
         .update(userIntegrationPreferences)
@@ -351,9 +351,9 @@ export class SmartSyncService {
       });
     }
   }
-
+  
   // ========== Private Helper Methods ==========
-
+  
   private async syncResources(params: {
     organizationId: string;
     integrationId: string;
@@ -363,29 +363,56 @@ export class SmartSyncService {
     level: number;
   }): Promise<number> {
     const { organizationId, integrationId, resources, resourceType, parentId, level } = params;
-
+    
     if (resources.length === 0) return 0;
-
+    
     // Limit number of resources to prevent database bloat
     const resourcesToSync = resources.slice(0, this.MAX_RESOURCES_PER_LEVEL);
-
+    
     for (const resource of resourcesToSync) {
       // Build path for breadcrumb
-      const parentPath = parentId
+      const parentPath = parentId 
         ? ((await this.getResourceById(parentId))?.path || "")
         : "";
       const path = `${parentPath}/${resource.id}`;
-
+      
       // Determine provider type based on resource
       let providerType = resourceType;
       if ('metadata' in resource && resource.metadata) {
         // Extract provider-specific type from metadata if available
         providerType = (resource.metadata as any).providerType || resourceType;
       }
-
-      await db
-        .insert(syncedResources)
-        .values({
+      
+      // Check if resource already exists
+      const [existing] = await db
+        .select()
+        .from(syncedResources)
+        .where(
+          and(
+            eq(syncedResources.organizationId, organizationId),
+            eq(syncedResources.integrationId, integrationId),
+            eq(syncedResources.externalId, resource.id)
+          )
+        )
+        .limit(1);
+      
+      if (existing) {
+        // Update existing resource
+        await db
+          .update(syncedResources)
+          .set({
+            name: resource.name,
+            parentId,
+            level,
+            path,
+            lastSyncedAt: new Date(),
+            syncStatus: "synced",
+            updatedAt: new Date(),
+          })
+          .where(eq(syncedResources.id, existing.id));
+      } else {
+        // Insert new resource
+        await db.insert(syncedResources).values({
           organizationId,
           integrationId,
           resourceType,
@@ -398,24 +425,13 @@ export class SmartSyncService {
           isSelectable: resourceType === 'task' || resourceType === 'collection',
           lastSyncedAt: new Date(),
           syncStatus: "synced",
-        })
-        .onConflictDoUpdate({
-          target: [syncedResources.organizationId, syncedResources.integrationId, syncedResources.externalId],
-          set: {
-            name: resource.name,
-            parentId,
-            level,
-            path,
-            lastSyncedAt: new Date(),
-            syncStatus: "synced",
-            updatedAt: new Date(),
-          },
         });
+      }
     }
-
+    
     return resourcesToSync.length;
   }
-
+  
   private async getResources(
     organizationId: string,
     integrationId: string,
@@ -432,36 +448,36 @@ export class SmartSyncService {
           eq(syncedResources.resourceType, resourceType)
         )
       );
-
+    
     if (limit) {
       query.limit(limit);
     }
-
+    
     return query;
   }
-
+  
   private async getResourceById(resourceId: string) {
     const [resource] = await db
       .select()
       .from(syncedResources)
       .where(eq(syncedResources.id, resourceId))
       .limit(1);
-
+    
     return resource;
   }
-
+  
   private getFromCache(key: string): any {
     const cached = cache.get(key);
     if (!cached) return null;
-
+    
     if (Date.now() > cached.expires) {
       cache.delete(key);
       return null;
     }
-
+    
     return cached.data;
   }
-
+  
   private setCache(key: string, data: any) {
     cache.set(key, {
       data,
