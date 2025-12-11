@@ -18,6 +18,7 @@ export default [
   route("api/integrations/:provider/connect", "./routes/api/integrations.$provider.connect.tsx"),
   route("api/integrations/:provider/callback", "./routes/api/integrations.$provider.callback.tsx"),
   route("api/integrations/:provider/disconnect", "./routes/api/integrations.$provider.disconnect.tsx"),
+  route("api/integrations/:provider/sync", "./routes/api/integrations.$provider.sync.tsx"),
 
   // Protected routes with layout
   layout("./routes/_app.tsx", [

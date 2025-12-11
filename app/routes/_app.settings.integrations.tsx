@@ -1,17 +1,23 @@
 // ============================================
-// FILE: app/routes/_app.settings.integrations.tsx (FIXED)
+// FILE: app/routes/_app.settings.integrations.tsx (UPDATED WITH SYNC)
 // ============================================
 import { LoaderFunctionArgs, useLoaderData, useFetcher } from "react-router";
-import { IconPlug, IconCheck, IconX, IconRefresh, IconAlertCircle } from "@tabler/icons-react";
 import { getSession } from "~/lib/session.server";
 import { db } from "~/lib/db.server";
-import { users, integrations } from "~/db/schema";
-import { eq, and } from "drizzle-orm";
-import { providerRegistry } from "~/lib/integrations/provider-registry";
-import { Button } from "~/components/ui/button";
+import { integrations, users, syncedResources } from "~/db/schema";
+import { eq, and, sql } from "drizzle-orm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Button } from "~/components/ui/button";
 import { Badge } from "~/components/ui/badge";
 import { Alert, AlertDescription } from "~/components/ui/alert";
+import { 
+  IconCheck, 
+  IconRefresh, 
+  IconX,
+  IconAlertCircle,
+  IconClock,
+} from "@tabler/icons-react";
+import { providerRegistry } from "~/lib/integrations/provider-registry";
 import { SafeDate } from "~/components/safe-date";
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -19,70 +25,90 @@ export async function loader({ request }: LoaderFunctionArgs) {
   const userId = session.get("userId");
   const url = new URL(request.url);
 
-  const [currentUser] = await db
+  // Get success/error messages from URL
+  const success = url.searchParams.get("success");
+  const error = url.searchParams.get("error");
+
+  // Get user with organization
+  const [user] = await db
     .select()
     .from(users)
     .where(eq(users.id, userId))
     .limit(1);
 
   // Get all available providers
-  const allProviders = providerRegistry.getAllMetadata();
+  const availableProviders = providerRegistry.getAllMetadata();
 
-  // Get connected integrations
+  // Get connected integrations with sync stats
   const connectedIntegrations = await db
-    .select()
+    .select({
+      id: integrations.id,
+      provider: integrations.provider,
+      providerAccountId: integrations.providerAccountId,
+      isActive: integrations.isActive,
+      lastSyncedAt: integrations.lastSyncedAt,
+      createdAt: integrations.createdAt,
+      metadata: integrations.metadata,
+    })
     .from(integrations)
     .where(
       and(
-        eq(integrations.organizationId, currentUser.organizationId),
+        eq(integrations.organizationId, user.organizationId),
         eq(integrations.isActive, true)
       )
     );
 
-  // Map providers with connection status
-  const providersWithStatus = allProviders.map((provider) => {
-    const connected = connectedIntegrations.find(
-      (int) => int.provider === provider.name
-    );
+  // Get resource counts for each integration
+  const integrationsWithStats = await Promise.all(
+    connectedIntegrations.map(async (integration) => {
+      const [stats] = await db
+        .select({
+          containers: sql<number>`COUNT(*) FILTER (WHERE resource_type = 'container')`,
+          projects: sql<number>`COUNT(*) FILTER (WHERE resource_type = 'project')`,
+          collections: sql<number>`COUNT(*) FILTER (WHERE resource_type = 'collection')`,
+          tasks: sql<number>`COUNT(*) FILTER (WHERE resource_type = 'task')`,
+          total: sql<number>`COUNT(*)`,
+        })
+        .from(syncedResources)
+        .where(eq(syncedResources.integrationId, integration.id));
 
-    return {
-      ...provider,
-      connected: !!connected,
-      integration: connected || null,
-    };
-  });
-
-  // Get URL params for messages
-  const success = url.searchParams.get("success");
-  const disconnected = url.searchParams.get("disconnected");
-  const error = url.searchParams.get("error");
+      return {
+        ...integration,
+        stats: {
+          containers: Number(stats.containers) || 0,
+          projects: Number(stats.projects) || 0,
+          collections: Number(stats.collections) || 0,
+          tasks: Number(stats.tasks) || 0,
+          total: Number(stats.total) || 0,
+        },
+      };
+    })
+  );
 
   return {
-    providers: providersWithStatus,
-    userRole: currentUser.role,
+    user,
+    availableProviders,
+    connectedIntegrations: integrationsWithStats,
     messages: {
-      success: success === "true",
-      disconnected: disconnected === "true",
-      error: error ? decodeURIComponent(error) : null,
+      success,
+      error,
     },
   };
 }
 
 export default function IntegrationsSettings() {
-  const { providers, userRole, messages } = useLoaderData<typeof loader>();
-  const fetcher = useFetcher();
+  const { user, availableProviders, connectedIntegrations, messages } = useLoaderData<typeof loader>();
+  const syncFetcher = useFetcher();
 
-  const canManageIntegrations = userRole === "admin";
+  const isAdmin = user.role === "admin";
+  const isSyncing = syncFetcher.state !== "idle";
 
-  const handleDisconnect = (providerName: string, displayName: string) => {
-    if (confirm(`Are you sure you want to disconnect ${displayName}? This will stop all syncing.`)) {
-      fetcher.submit(
-        {},
-        {
-          method: "post",
-          action: `/api/integrations/${providerName}/disconnect`,
-        }
-      );
+  const getProviderIcon = (provider: string) => {
+    switch (provider) {
+      case "clickup":
+        return <IconCheck size={24} className="text-primary" />;
+      default:
+        return <IconCheck size={24} className="text-primary" />;
     }
   };
 
@@ -90,194 +116,282 @@ export default function IntegrationsSettings() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h3 className="text-lg font-semibold text-foreground mb-1">
-          Integrations
-        </h3>
+        <h1 className="text-[40px] font-bold text-muted mb-1">Integrations</h1>
         <p className="text-sm text-muted-foreground">
-          Connect with your favorite project management tools
+          Connect TimeTrack with your project management tools
         </p>
       </div>
 
       {/* Success/Error Messages */}
       {messages.success && (
-        <Alert className="bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800">
-          <IconCheck size={16} className="text-green-600 dark:text-green-400" />
-          <AlertDescription className="text-green-800 dark:text-green-200">
-            Integration connected successfully! You can now sync your data.
-          </AlertDescription>
-        </Alert>
-      )}
-
-      {messages.disconnected && (
-        <Alert className="bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800">
-          <IconCheck size={16} className="text-blue-600 dark:text-blue-400" />
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
-            Integration disconnected successfully.
+        <Alert className="border-green-500/50 bg-green-500/10">
+          <IconCheck className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-600 dark:text-green-400">
+            Integration connected successfully! Resources are being synced in the background.
           </AlertDescription>
         </Alert>
       )}
 
       {messages.error && (
-        <Alert variant="destructive">
-          <IconAlertCircle size={16} />
-          <AlertDescription>
-            {messages.error === "unauthorized" && "Only administrators can manage integrations."}
-            {messages.error === "provider_not_available" && "This integration is not available yet."}
-            {messages.error === "invalid_callback" && "Invalid OAuth callback. Please try again."}
-            {messages.error === "invalid_state" && "Security validation failed. Please try again."}
-            {messages.error === "connection_failed" && "Failed to connect. Please try again."}
-            {!["unauthorized", "provider_not_available", "invalid_callback", "invalid_state", "connection_failed"].includes(messages.error) && 
-              `Error: ${messages.error}`}
+        <Alert className="border-red-500/50 bg-red-500/10">
+          <IconAlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-600 dark:text-red-400">
+            {messages.error === "invalid_state"
+              ? "Invalid state parameter. Please try again."
+              : messages.error === "invalid_callback"
+              ? "Invalid callback parameters. Please try again."
+              : messages.error === "connection_failed"
+              ? "Failed to connect integration. Please try again."
+              : `Error: ${messages.error}`}
           </AlertDescription>
         </Alert>
       )}
 
-      {/* Integrations Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {providers.map((provider) => (
-          <Card 
-            key={provider.name} 
-            className={`border-border ${!provider.isEnabled ? 'opacity-60' : ''}`}
-          >
-            <CardHeader>
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-3">
-                  <div 
-                    className="h-12 w-12 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${provider.color}15` }}
-                  >
-                    <IconPlug 
-                      size={24} 
-                      style={{ color: provider.color }}
-                    />
+      {/* Sync Success Message */}
+      {syncFetcher.data?.success && (
+        <Alert className="border-green-500/50 bg-green-500/10">
+          <IconCheck className="h-4 w-4 text-green-600" />
+          <AlertDescription className="text-green-600 dark:text-green-400">
+            {syncFetcher.data.message}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Sync Error Message */}
+      {syncFetcher.data?.error && (
+        <Alert className="border-red-500/50 bg-red-500/10">
+          <IconAlertCircle className="h-4 w-4 text-red-600" />
+          <AlertDescription className="text-red-600 dark:text-red-400">
+            Sync failed: {syncFetcher.data.error}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Connected Integrations */}
+      {connectedIntegrations.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl text-muted-foreground font-semibold">Connected Integrations</h2>
+          {connectedIntegrations.map((integration) => {
+            const provider = availableProviders.find((p) => p.name === integration.provider);
+            const isSyncingThis = isSyncing && syncFetcher.formData?.get("provider") === integration.provider;
+
+            return (
+              <Card key={integration.id} className="border-border">
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-3">
+                      {getProviderIcon(integration.provider)}
+                      <div>
+                        <CardTitle className="text-lg">{provider?.displayName}</CardTitle>
+                        <CardDescription>
+                          Connected <SafeDate date={integration.createdAt} format="date" />
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <Badge variant="default" className="bg-green-500/10 text-green-600 dark:text-green-400">
+                      <IconCheck size={14} className="mr-1" />
+                      Active
+                    </Badge>
                   </div>
-                  <div>
-                    <CardTitle className="text-foreground">
-                      {provider.displayName}
-                    </CardTitle>
-                    {provider.connected && (
-                      <Badge 
-                        variant="default" 
-                        className="mt-1 bg-green-500 hover:bg-green-600"
-                      >
-                        <IconCheck size={12} className="mr-1" />
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Sync Stats */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold text-primary">{integration.stats.containers}</p>
+                      <p className="text-xs text-muted-foreground">Workspaces</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold text-primary">{integration.stats.projects}</p>
+                      <p className="text-xs text-muted-foreground">Projects</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold text-primary">{integration.stats.collections}</p>
+                      <p className="text-xs text-muted-foreground">Lists</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold text-primary">{integration.stats.tasks}</p>
+                      <p className="text-xs text-muted-foreground">Tasks</p>
+                    </div>
+                    <div className="text-center p-3 rounded-lg bg-muted/50">
+                      <p className="text-2xl font-bold text-primary">{integration.stats.total}</p>
+                      <p className="text-xs text-muted-foreground">Total</p>
+                    </div>
+                  </div>
+
+                  {/* Last Synced */}
+                  {integration.lastSyncedAt && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <IconClock size={16} />
+                      Last synced: <SafeDate date={integration.lastSyncedAt} format="datetime" />
+                    </div>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex flex-wrap gap-2">
+                    {/* Smart Sync Button */}
+                    {isAdmin && (
+                      <syncFetcher.Form method="post" action={`/api/integrations/${integration.provider}/sync`}>
+                        <Button
+                          type="submit"
+                          variant="outline"
+                          size="sm"
+                          disabled={isSyncingThis}
+                        >
+                          {isSyncingThis ? (
+                            <>
+                              <IconRefresh size={16} className="mr-2 animate-spin" />
+                              Syncing...
+                            </>
+                          ) : (
+                            <>
+                              <IconRefresh size={16} className="mr-2" />
+                              Smart Sync
+                            </>
+                          )}
+                        </Button>
+                      </syncFetcher.Form>
+                    )}
+
+                    {/* Full Sync Button */}
+                    {isAdmin && (
+                      <syncFetcher.Form method="post" action={`/api/integrations/${integration.provider}/sync`}>
+                        <input type="hidden" name="full" value="true" />
+                        <Button
+                          type="submit"
+                          variant="outline"
+                          size="sm"
+                          disabled={isSyncingThis}
+                        >
+                          {isSyncingThis ? (
+                            <>
+                              <IconRefresh size={16} className="mr-2 animate-spin" />
+                              Syncing...
+                            </>
+                          ) : (
+                            <>
+                              <IconRefresh size={16} className="mr-2" />
+                              Full Sync
+                            </>
+                          )}
+                        </Button>
+                      </syncFetcher.Form>
+                    )}
+
+                    {/* Disconnect Button */}
+                    {isAdmin && (
+                      <form method="post" action={`/api/integrations/${integration.provider}/disconnect`}>
+                        <Button type="submit" variant="destructive" size="sm">
+                          <IconX size={16} className="mr-2" />
+                          Disconnect
+                        </Button>
+                      </form>
+                    )}
+
+                    {!isAdmin && (
+                      <p className="text-sm text-muted-foreground italic">
+                        Only administrators can manage integrations
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Available Integrations */}
+      <div className="space-y-4">
+        <h2 className="text-xl font-semibold text-muted-foreground">Available Integrations</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {availableProviders.map((provider) => {
+            const isConnected = connectedIntegrations.some(
+              (i) => i.provider === provider.name
+            );
+
+            return (
+              <Card
+                key={provider.name}
+                className={`border-border ${
+                  !provider.isEnabled ? "opacity-60" : ""
+                }`}
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      {getProviderIcon(provider.name)}
+                      <div>
+                        <CardTitle className="text-base">{provider.displayName}</CardTitle>
+                        {isConnected && (
+                          <Badge
+                            variant="default"
+                            className="mt-1 bg-green-500/10 text-green-600 dark:text-green-400"
+                          >
+                            Connected
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  <CardDescription>{provider.description}</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {provider.isEnabled ? (
+                    isConnected ? (
+                      <Button variant="outline" disabled className="w-full">
+                        <IconCheck size={16} className="mr-2" />
                         Connected
-                      </Badge>
-                    )}
-                    {!provider.isEnabled && (
-                      <Badge variant="secondary" className="mt-1">
-                        Coming Soon
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </CardHeader>
-
-            <CardContent className="space-y-4">
-              <CardDescription className="text-muted-foreground">
-                {provider.description}
-              </CardDescription>
-
-              {/* Features */}
-              <div className="flex flex-wrap gap-2">
-                {provider.features.timeTracking && (
-                  <Badge variant="outline" className="text-xs">
-                    Time Tracking
-                  </Badge>
-                )}
-                {provider.features.tasks && (
-                  <Badge variant="outline" className="text-xs">
-                    Tasks
-                  </Badge>
-                )}
-                {provider.features.projects && (
-                  <Badge variant="outline" className="text-xs">
-                    Projects
-                  </Badge>
-                )}
-                {provider.features.workspaces && (
-                  <Badge variant="outline" className="text-xs">
-                    Workspaces
-                  </Badge>
-                )}
-              </div>
-
-              {/* Connection Status - FIXED WITH SafeDate */}
-              {provider.connected && provider.integration && (
-                <div className="pt-2 border-t border-border">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="flex items-center gap-1">
-                      Connected <SafeDate date={provider.integration.createdAt} format="date" />
-                    </span>
-                    {provider.integration.lastSyncedAt && (
-                      <span className="flex items-center gap-1">
-                        <IconRefresh size={12} />
-                        <SafeDate date={provider.integration.lastSyncedAt} format="date" />
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-2">
-                {provider.isEnabled && !provider.connected && canManageIntegrations && (
-                  <Button
-                    className="w-full"
-                    onClick={() => {
-                      window.location.href = `/api/integrations/${provider.name}/connect`;
-                    }}
-                  >
-                    Connect {provider.displayName}
-                  </Button>
-                )}
-
-                {provider.isEnabled && provider.connected && (
-                  <>
-                    <Button
-                      variant="outline"
-                      className="flex-1"
-                      onClick={() => {
-                        window.location.href = `/settings/integrations/${provider.name}`;
-                      }}
-                    >
-                      Configure
-                    </Button>
-                    {canManageIntegrations && (
-                      <Button
-                        variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
-                        onClick={() => handleDisconnect(provider.name, provider.displayName)}
-                        disabled={fetcher.state === "submitting"}
-                      >
-                        <IconX size={16} />
                       </Button>
-                    )}
-                  </>
-                )}
-
-                {!provider.isEnabled && (
-                  <Button variant="outline" className="w-full" disabled>
-                    Coming Soon
-                  </Button>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+                    ) : isAdmin ? (
+                      <form
+                        method="get"
+                        action={`/api/integrations/${provider.name}/connect`}
+                      >
+                        <Button type="submit" className="w-full">
+                          Connect {provider.displayName}
+                        </Button>
+                      </form>
+                    ) : (
+                      <Button variant="outline" disabled className="w-full">
+                        Admin Only
+                      </Button>
+                    )
+                  ) : (
+                    <Button variant="outline" disabled className="w-full">
+                      Coming Soon
+                    </Button>
+                  )}
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
       </div>
 
-      {/* Only admins can manage */}
-      {!canManageIntegrations && (
-        <Card className="border-border bg-muted/50">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground text-center">
-              Only administrators can manage integrations
-            </p>
-          </CardContent>
-        </Card>
-      )}
+      {/* Info Box */}
+      <Card className="border-blue-500/50 bg-blue-500/5">
+        <CardHeader>
+          <CardTitle className="text-base flex items-center gap-2">
+            <IconAlertCircle size={20} className="text-blue-600" />
+            About Syncing
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-2 text-sm text-muted-foreground">
+          <p>
+            <strong>Smart Sync:</strong> Syncs your most recent and active resources (workspaces, projects, lists, and tasks). 
+            This is fast and recommended for daily use.
+          </p>
+          <p>
+            <strong>Full Sync:</strong> Syncs all resources from your integration. This takes longer but ensures you have 
+            complete data. Use this if you need to refresh everything.
+          </p>
+          <p>
+            <strong>Automatic Sync:</strong> When you first connect an integration, we automatically perform a smart sync 
+            in the background. You can manually trigger syncs anytime using the buttons above.
+          </p>
+        </CardContent>
+      </Card>
     </div>
   );
 }

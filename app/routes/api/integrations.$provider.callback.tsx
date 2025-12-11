@@ -5,6 +5,7 @@ import { LoaderFunctionArgs, redirect } from "react-router";
 import { getSession, commitSession } from "~/lib/session.server";
 import { getProvider, ProviderType } from "~/lib/integrations/provider-registry";
 import { integrationService } from "~/lib/integrations/integration-service.server";
+import { smartSyncService } from "~/lib/integrations/smart-sync-service.server"; // ✅ ADDED
 
 export async function loader({ request, params }: LoaderFunctionArgs) {
   const session = await getSession(request);
@@ -69,7 +70,7 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
     }
 
     // Store integration in database
-    await integrationService.connectIntegration({
+    const integration = await integrationService.connectIntegration({
       organizationId,
       provider: storedProvider,
       tokens,
@@ -83,6 +84,25 @@ export async function loader({ request, params }: LoaderFunctionArgs) {
         },
         connectedAt: new Date().toISOString(),
       },
+    });
+
+    // ✅ ADDED: Trigger smart sync in the background
+    // This syncs workspaces, projects, lists, and tasks from the integration
+    console.log(`🔄 Starting smart sync for ${storedProvider} integration ${integration.id}`);
+    
+    // Run sync asynchronously (don't block the redirect)
+    smartSyncService.syncIntegration({
+      integrationId: integration.id,
+      organizationId,
+      accessToken: tokens.accessToken,
+      provider: storedProvider,
+      full: false, // Smart sync (fast) - only syncs what's needed
+    }).then((stats) => {
+      console.log(`✅ Sync completed for ${storedProvider}:`, stats);
+    }).catch((error) => {
+      console.error(`❌ Sync failed for ${storedProvider}:`, error);
+      // Note: Sync errors don't prevent the integration from being connected
+      // Users can manually trigger a sync later from the UI
     });
 
     // Clear OAuth session data
